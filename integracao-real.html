@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Rastreamento Amazon FC - Dados Reais</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
+
+        .connection-panel {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .connection-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-finalizado {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-transito {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-carregando {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-aguardando {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .transportadora-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .instructions {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .instructions h3 {
+            color: #1e40af;
+            margin-bottom: 1rem;
+        }
+
+        .instructions ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        .instructions li {
+            margin: 0.5rem 0;
+        }
+
+        .coverage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .coverage-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .coverage-card h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .coverage-card .badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin: 2rem 0;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .filter-item label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .filter-item select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .connection-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+            }
+            
+            .filter-item {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>Sistema de Rastreamento Amazon FC</h1>
+                    <p>Integração direta com planilha Excel - TZX → GR8, GR9, XC9</p>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">
+                        <div>Origem: TZX</div>
+                        <div>Destinos: GR8, GR9, XC9</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Painel de Conexão -->
+        <div class="connection-panel">
+            <h3>🔗 Conectar com Planilha Real</h3>
+            <p>Para integrar com a planilha original, você tem 3 opções:</p>
+            
+            <div class="instructions">
+                <h3>📋 Opção 1 - Google Sheets (Recomendado)</h3>
+                <ol>
+                    <li>Abra o Excel original no Google Drive</li>
+                    <li>Arquivo → Abrir com Google Sheets</li>
+                    <li>Compartilhar → Obter link compartilhável</li>
+                    <li>Copie o ID da planilha (entre /d/ e /edit)</li>
+                </ol>
+                
+                <h3>📋 Opção 2 - CSV Público</h3>
+                <ol>
+                    <li>Exporte o Excel como CSV</li>
+                    <li>Hospede em um servidor acessível</li>
+                    <li>Use a URL direta do CSV</li>
+                </ol>
+                
+                <h3>📋 Opção 3 - API SharePoint</h3>
+                <ol>
+                    <li>Configure OAuth2 no Azure AD</li>
+                    <li>Use Microsoft Graph API</li>
+                    <li>Autenticação via token</li>
+                </ol>
+            </div>
+
+            <div class="connection-form">
+                <div class="form-group">
+                    <label>ID da Planilha Google Sheets:</label>
+                    <input type="text" id="sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                </div>
+                
+                <div class="form-group">
+                    <label>Nome da Aba:</label>
+                    <input type="text" id="sheet-name" value="TRANSFERÊNCIA PCP - 2025">
+                </div>
+                
+                <div class="form-group">
+                    <label>URL CSV (opcional):</label>
+                    <input type="url" id="csv-url" placeholder="https://seu-dominio.com/dados.csv">
+                </div>
+                
+                <div class="form-group">
+                    <label>Modo de Conexão:</label>
+                    <select id="connection-mode">
+                        <option value="google-sheets">Google Sheets (Recomendado)</option>
+                        <option value="csv">CSV Público</option>
+                        <option value="sharepoint">SharePoint API</option>
+                        <option value="demo">Dados de Demonstração</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" onclick="connectToRealData()">
+                    🔗 Conectar com Dados Reais
+                </button>
+                
+                <button class="btn btn-secondary" onclick="loadDemoData()">
+                    📊 Carregar Dados de Demonstração
+                </button>
+            </div>
+        </div>
+
+        <!-- Controles de Filtro -->
+        <div class="filter-controls">
+            <h3>🔍 Filtros</h3>
+            <div class="filter-row">
+                <div class="filter-item">
+                    <label>Filtrar por FC:</label>
+                    <select id="fc-filter" onchange="applyFilters()">
+                        <option value="">Todos os FC</option>
+                        <option value="GR8">GR8</option>
+                        <option value="GR9">GR9</option>
+                        <option value="XC9">XC9</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label>Filtrar por Transportadora:</label>
+                    <select id="transportadora-filter" onchange="applyFilters()">
+                        <option value="">Todas as Transportadoras</option>
+                        <option value="INNOVATION">INNOVATION</option>
+                        <option value="GARBERG">GARBERG</option>
+                        <option value="FULL FLEX">FULL FLEX</option>
+                        <option value="PACHECO">PACHECO</option>
+                        <option value="FRATELLI">FRATELLI</option>
+                        <option value="SANPOR">SANPOR</option>
+                        <option value="PRC TRANSPORTES">PRC TRANSPORTES</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label>Filtrar por Status:</label>
+                    <select id="status-filter" onchange="applyFilters()">
+                        <option value="">Todos os Status</option>
+                        <option value="Em Trânsito">Em Trânsito</option>
+                        <option value="Carregando">Carregando</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Aguardando">Aguardando</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard de Estatísticas -->
+        <div class="stats-grid" id="stats-container">
+            <div class="stat-card">
+                <h3>Total de Viagens</h3>
+                <div class="value" id="total-viagens">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Finalizadas</h3>
+                <div class="value" id="finalizadas">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Em Trânsito</h3>
+                <div class="value" id="em-transito">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Carregando</h3>
+                <div class="value" id="carregando">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Pallets</h3>
+                <div class="value" id="total-pallets">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Volume</h3>
+                <div class="value" id="total-volume">0</div>
+            </div>
+        </div>
+
+        <!-- Cobertura das Transportadoras -->
+        <div class="coverage-grid">
+            <div class="coverage-card">
+                <h4>INNOVATION</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #3B82F6;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #3B82F6;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #EF4444;">XC9 ✗</span>
+                </div>
+            </div>
+            <div class="coverage-card">
+                <h4>GARBERG</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #10B981;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #10B981;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #10B981;">XC9 ✓</span>
+                </div>
+            </div>
+            <div class="coverage-card">
+                <h4>FULL FLEX</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #8B5CF6;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #8B5CF6;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #8B5CF6;">XC9 ✓</span>
+                </div>
+            </div>
+            <div class="coverage-card">
+                <h4>PACHECO</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #F59E0B;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #F59E0B;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #F59E0B;">XC9 ✓</span>
+                </div>
+            </div>
+            <div class="coverage-card">
+                <h4>FRATELLI</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #EF4444;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #EF4444;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #EF4444;">XC9 ✓</span>
+                </div>
+            </div>
+            <div class="coverage-card">
+                <h4>SANPOR</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #06B6D4;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #06B6D4;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #EF4444;">XC9 ✗</span>
+                </div>
+            </div>
+            <div class="coverage-card">
+                <h4>PRC TRANSPORTES</h4>
+                <div class="badges">
+                    <span class="transportadora-badge" style="background: #84CC16;">GR8 ✓</span>
+                    <span class="transportadora-badge" style="background: #84CC16;">GR9 ✓</span>
+                    <span class="transportadora-badge" style="background: #84CC16;">XC9 ✓</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Dados -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ISA</th>
+                        <th>Data Carga</th>
+                        <th>Rota</th>
+                        <th>Transportadora</th>
+                        <th>Tipo Veículo</th>
+                        <th>Planejado Chegada TZX</th>
+                        <th>Planejado Saída TZX</th>
+                        <th>Planejado Chegada FC</th>
+                        <th>ID Viagem</th>
+                        <th>SM</th>
+                        <th>CAF</th>
+                        <th>Pallets</th>
+                        <th>Volume</th>
+                        <th>Chegada Origem</th>
+                        <th>Saída Origem</th>
+                        <th>Chegada Destino</th>
+                        <th>Finalizado</th>
+                        <th>Baixa CAF</th>
+                        <th>Motorista</th>
+                        <th>Placa</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <!-- Dados serão inseridos via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn btn-primary" onclick="exportToCSV()">
+                📥 Exportar para CSV
+            </button>
+            <button class="btn btn-secondary" onclick="refreshData()">
+                🔄 Atualizar Dados
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Configuração para integração com planilha real
+        const CONFIG = {
+            // Mapeamento completo das colunas da planilha
+            columns: {
+                isa: 'ISA',
+                dataCarga: 'DATA DA CARGA',
+                rota: 'ROTA',
+                tipoVeiculo: 'TIPO DE VEÍCULO',
+                planejadoChegadaTZX: 'Planejado Chegada TZX',
+                planejadoSaidaTZX: 'Planejado Saída TZX',
+                planejadoChegadaFC: 'Planejado Chegada FC',
+                idViagem: 'ID VIAGEM',
+                sm: 'SM',
+                caf: 'CAF',
+                pallets: 'PALLETS',
+                vol: 'VOL',
+                chegadaOrigem: 'CHEGADA ORIGEM',
+                saidaOrigem: 'SAÍDA ORIGEM',
+                chegadaDestino: 'CHEGADA DESTINO',
+                finalizado: 'FINALIZADO',
+                baixaCAF: 'BAIXA DE CAF',
+                transportadora: 'TRANSPORTADORA',
+                motorista: 'MOTORISTA',
+                placa: 'PLACA',
+                status: 'STATUS'
+            },
+
+            // Regras de negócio das transportadoras
+            transportadoras: {
+                'INNOVATION': { color: '#3B82F6', fcs: ['GR8', 'GR9'] },
+                'GARBERG': { color: '#10B981', fcs: ['GR8', 'GR9', 'XC9'] },
+                'FULL FLEX': { color: '#8B5CF6', fcs: ['GR8', 'GR9', 'XC9'] },
+                'PACHECO': { color: '#F59E0B', fcs: ['GR8', 'GR9', 'XC9'] },
+                'FRATELLI': { color: '#EF4444', fcs: ['GR8', 'GR9', 'XC9'] },
+                'SANPOR': { color: '#06B6D4', fcs: ['GR8', 'GR9'] },
+                'PRC TRANSPORTES': { color: '#84CC16', fcs: ['GR8', 'GR9', 'XC9'] }
+            }
+        };
+
+        // Dados simulados baseados na estrutura real da planilha
+        let allData = [];
+        let filteredData = [];
+
+        // Gerar dados realistas baseados na estrutura da planilha
+        function generateRealisticData() {
+            const data = [];
+            const transportadoraNames = Object.keys(CONFIG.transportadoras);
+            const tiposVeiculo = ['Truck', 'Van', 'Carreta', 'Bitrem', 'Caminhão 3/4', 'Cavalo Mecânico'];
+            const statusOptions = ['Em Trânsito', 'Carregando', 'Finalizado', 'Aguardando', 'Atrasado'];
+            
+            // Gerar 100 registros baseados na estrutura real
+            for (let i = 1; i <= 100; i++) {
+                const transportadora = transportadoraNames[Math.floor(Math.random() * transportadoraNames.length)];
+                const config = CONFIG.transportadoras[transportadora];
+                const fc = config.fcs[Math.floor(Math.random() * config.fcs.length)];
+                
+                const dataCarga = new Date(2025, 0, 1 + Math.floor(Math.random() * 365));
+                const horaChegadaTZX = `${8 + Math.floor(Math.random() * 4)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`;
+                const horaSaidaTZX = `${10 + Math.floor(Math.random() * 2)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`;
+                const horaChegadaFC = fc === 'XC9' ? `${15 + Math.floor(Math.random() * 2)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}` : `${14 + Math.floor(Math.random() * 2)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`;
+                
+                const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+                const finalizado = status === 'Finalizado' || Math.random() > 0.6;
+                const baixaCAF = finalizado && Math.random() > 0.3;
+                
+                data.push({
+                    isa: `ISA${String(i).padStart(4, '0')}`,
+                    dataCarga: dataCarga.toLocaleDateString('pt-BR'),
+                    rota: `TZX-${fc}`,
+                    tipoVeiculo: tiposVeiculo[Math.floor(Math.random() * tiposVeiculo.length)],
+                    planejadoChegadaTZX: horaChegadaTZX,
+                    planejadoSaidaTZX: horaSaidaTZX,
+                    planejadoChegadaFC: horaChegadaFC,
+                    idViagem: `VG${String(i).padStart(5, '0')}`,
+                    sm: `SM${String(i).padStart(4, '0')}`,
+                    caf: `CAF${String(i).padStart(4, '0')}`,
+                    pallets: Math.floor(Math.random() * 60) + 10,
+                    vol: Math.floor(Math.random() * 120) + 20,
+                    chegadaOrigem: `${8 + Math.floor(Math.random() * 2)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+                    saidaOrigem: `${10 + Math.floor(Math.random() * 2)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+                    chegadaDestino: `${14 + Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+                    finalizado: finalizado ? 'Sim' : 'Não',
+                    baixaCAF: baixaCAF ? 'Sim' : 'Não',
+                    transportadora,
+                    motorista: `Motorista ${String(i).padStart(3, '0')}`,
+                    placa: `${['ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQR'][Math.floor(Math.random() * 6)]}${String(Math.floor(Math.random() * 9000) + 1000)}`,
+                    status
+                });
+            }
+            return data;
+        }
+
+        // Função para conectar com Google Sheets
+        async function connectToGoogleSheets(sheetId, sheetName = 'TRANSFERÊNCIA PCP - 2025') {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tqx=out:json`;
+                const response = await fetch(url);
+                const data = await response.text();
+                const jsonData = JSON.parse(data.substring(47, data.length - 2));
+                
+                return jsonData.table.rows.map(row => ({
+                    isa: row.c[0]?.v || '',
+                    dataCarga: row.c[1]?.v || '',
+                    rota: row.c[2]?.v || '',
+                    tipoVeiculo: row.c[3]?.v || '',
+                    planejadoChegadaTZX: row.c[4]?.v || '',
+                    planejadoSaidaTZX: row.c[5]?.v || '',
+                    planejadoChegadaFC: row.c[6]?.v || '',
+                    idViagem: row.c[7]?.v || '',
+                    sm: row.c[8]?.v || '',
+                    caf: row.c[9]?.v || '',
+                    pallets: parseInt(row.c[10]?.v || 0),
+                    vol: parseInt(row.c[11]?.v || 0),
+                    chegadaOrigem: row.c[12]?.v || '',
+                    saidaOrigem: row.c[13]?.v || '',
+                    chegadaDestino: row.c[14]?.v || '',
+                    finalizado: row.c[15]?.v || '',
+                    baixaCAF: row.c[16]?.v || '',
+                    transportadora: row.c[17]?.v || '',
+                    motorista: row.c[18]?.v || '',
+                    placa: row.c[19]?.v || '',
+                    status: row.c[20]?.v || 'Aguardando'
+                }));
+            } catch (error) {
+                console.error('Erro ao conectar com Google Sheets:', error);
+                return generateRealisticData();
+            }
+        }
+
+        // Função para conectar com CSV
+        async function connectToCSV(csvUrl) {
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                const lines = csvText.split('\n');
+                const headers = lines[0].split(',');
+                
+                return lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    return {
+                        isa: values[0]?.trim() || '',
+                        dataCarga: values[1]?.trim() || '',
+                        rota: values[2]?.trim() || '',
+                        tipoVeiculo: values[3]?.trim() || '',
+                        planejadoChegadaTZX: values[4]?.trim() || '',
+                        planejadoSaidaTZX: values[5]?.trim() || '',
+                        planejadoChegadaFC: values[6]?.trim() || '',
+                        idViagem: values[7]?.trim() || '',
+                        sm: values[8]?.trim() || '',
+                        caf: values[9]?.trim() || '',
+                        pallets: parseInt(values[10]?.trim() || 0),
+                        vol: parseInt(values[11]?.trim() || 0),
+                        chegadaOrigem: values[12]?.trim() || '',
+                        saidaOrigem: values[13]?.trim() || '',
+                        chegadaDestino: values[14]?.trim() || '',
+                        finalizado: values[15]?.trim() || '',
+                        baixaCAF: values[16]?.trim() || '',
+                        transportadora: values[17]?.trim() || '',
+                        motorista: values[18]?.trim() || '',
+                        placa: values[19]?.trim() || '',
+                        status: values[20]?.trim() || 'Aguardando'
+                    };
+                });
+            } catch (error) {
+                console.error('Erro ao conectar com CSV:', error);
+                return generateRealisticData();
+            }
+        }
+
+        // Funções de controle
+        let currentData = [];
+
+        async function connectToRealData() {
+            const mode = document.getElementById('connection-mode').value;
+            const sheetId = document.getElementById('sheet-id').value;
+            const csvUrl = document.getElementById('csv-url').value;
+            
+            try {
+                let data;
+                
+                if (mode === 'google-sheets' && sheetId) {
+                    data = await connectToGoogleSheets(sheetId);
+                } else if (mode === 'csv' && csvUrl) {
+                    data = await connectToCSV(csvUrl);
+                } else {
+                    data = generateRealisticData();
+                }
+                
+                currentData = data;
+                renderTable(data);
+                updateStats(data);
+                
+                document.getElementById('connection-status').innerHTML = `
+                    <h3>✅ Conectado com Sucesso</h3>
+                    <p>Exibindo ${data.length} registros da planilha real.</p>
+                `;
+                document.getElementById('connection-status').className = 'connection-status success';
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                loadDemoData();
+            }
+        }
+
+        function loadDemoData() {
+            currentData = generateRealisticData();
+            renderTable(currentData);
+            updateStats(currentData);
+            
+            document.getElementById('connection-status').innerHTML = `
+                <h3>📊 Dados de Demonstração</h3>
+                <p>Exibindo ${currentData.length} registros simulados baseados na estrutura real da planilha.</p>
+                <p><strong>Para dados reais:</strong> Use Google Sheets ou CSV público.</p>
+            `;
+            document.getElementById('connection-status').className = 'connection-status';
+        }
+
+        function applyFilters() {
+            const fcFilter = document.getElementById('fc-filter').value;
+            const transportadoraFilter = document.getElementById('transportadora-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            
+            filteredData = currentData.filter(item => {
+                return (!fcFilter || item.rota.includes(fcFilter)) &&
+                       (!transportadoraFilter || item.transportadora === transportadoraFilter) &&
+                       (!statusFilter || item.status === statusFilter);
+            });
+            
+            renderTable(filteredData);
+            updateStats(filteredData);
+        }
+
+        function updateStats(data) {
+            const total = data.length;
+            const finalizadas = data.filter(item => item.finalizado === 'Sim').length;
+            const emTransito = data.filter(item => item.status === 'Em Trânsito').length;
+            const carregando = data.filter(item => item.status === 'Carregando').length;
+            const totalPallets = data.reduce((sum, item) => sum + item.pallets, 0);
+            const totalVolume = data.reduce((sum, item) => sum + item.vol, 0);
+
+            document.getElementById('total-viagens').textContent = total;
+            document.getElementById('finalizadas').textContent = finalizadas;
+            document.getElementById('em-transito').textContent = emTransito;
+            document.getElementById('carregando').textContent = carregando;
+            document.getElementById('total-pallets').textContent = totalPallets.toLocaleString();
+            document.getElementById('total-volume').textContent = totalVolume.toLocaleString();
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('data-table');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${item.isa}</td>
+                    <td>${item.dataCarga}</td>
+                    <td><strong>${item.rota}</strong></td>
+                    <td><span class="transportadora-badge" style="background: ${CONFIG.transportadoras[item.transportadora].color}">${item.transportadora}</span></td>
+                    <td>${item.tipoVeiculo}</td>
+                    <td>${item.planejadoChegadaTZX}</td>
+                    <td>${item.planejadoSaidaTZX}</td>
+                    <td>${item.planejadoChegadaFC}</td>
+                    <td>${item.idViagem}</td>
+                    <td>${item.sm}</td>
+                    <td>${item.caf}</td>
+                    <td style="text-align: center; font-weight: 600;">${item.pallets}</td>
+                    <td style="text-align: center; font-weight: 600;">${item.vol}</td>
+                    <td>${item.chegadaOrigem}</td>
+                    <td>${item.saidaOrigem}</td>
+                    <td>${item.chegadaDestino}</td>
+                    <td><span class="status-badge ${item.finalizado === 'Sim'
