@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Rastreamento Amazon FC - Integração Real</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
+
+        .connection-status {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .connection-status.error {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+
+        .connection-status.success {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin: 2rem 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .input-item label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .input-item input, .input-item select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-finalizado {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-transito {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-carregando {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .transportadora-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .instructions {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-item {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>Sistema de Rastreamento Amazon FC</h1>
+                    <p>Integração com planilha Excel - TZX → GR8, GR9, XC9</p>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">
+                        <div>Origem: TZX</div>
+                        <div>Destinos: GR8, GR9, XC9</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Status da Conexão -->
+        <div id="connection-status" class="connection-status">
+            <h3>📊 Configuração de Integração com Excel</h3>
+            <p>Para conectar com a planilha real, você precisa:</p>
+            <ol style="margin: 1rem 0; padding-left: 2rem;">
+                <li><strong>Converter a planilha Excel para Google Sheets</strong></li>
+                <li><strong>Habilitar acesso público ou criar API key</strong></li>
+                <li><strong>Usar a URL correta da planilha</strong></li>
+            </ol>
+            <p><strong>URL da planilha original:</strong> https://texcourierltda-my.sharepoint.com/:x:/r/personal/vithoria_teles_totalexpress_com_br/_layouts/15/Doc.aspx?sourcedoc=%7BDFB6984C-79B4-40EB-9014-ECFAF51DDBC5%7D&file=TRANSFER%C3%8ANCIA%20PCP%20-%202025.xlsx</p>
+        </div>
+
+        <!-- Configuração de Conexão -->
+        <div class="controls">
+            <h3>🔧 Configuração de Conexão</h3>
+            <div class="input-group">
+                <div class="input-item">
+                    <label>URL da Planilha (Google Sheets):</label>
+                    <input type="url" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/SEU-ID/edit" style="width: 100%;">
+                </div>
+                <div class="input-item">
+                    <label>ID da Planilha:</label>
+                    <input type="text" id="sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                </div>
+                <div class="input-item">
+                    <label>Nome da Aba:</label>
+                    <input type="text" id="sheet-name" value="TRANSFERÊNCIA PCP - 2025">
+                </div>
+                <button class="btn btn-primary" onclick="connectToSheet()">Conectar à Planilha</button>
+            </div>
+        </div>
+
+        <!-- Botão de Atualização -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn btn-primary" onclick="loadSampleData()">
+                📊 Carregar Dados de Exemplo
+            </button>
+            <button class="btn btn-primary" onclick="exportToCSV()">
+                📥 Exportar Dados
+            </button>
+        </div>
+
+        <!-- Dashboard de Estatísticas -->
+        <div class="stats-grid" id="stats-container">
+            <div class="stat-card">
+                <h3>Total de Viagens</h3>
+                <div class="value" id="total-viagens">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Finalizadas</h3>
+                <div class="value" id="finalizadas">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Em Trânsito</h3>
+                <div class="value" id="em-transito">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Carregando</h3>
+                <div class="value" id="carregando">0</div>
+            </div>
+        </div>
+
+        <!-- Cobertura das Transportadoras -->
+        <div class="instructions">
+            <h3>📋 Regras de Cobertura das Transportadoras</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">INNOVATION</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #3B82F6;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #3B82F6;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">XC9 ✗</span>
+                    </div>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">GARBERG</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #10B981;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #10B981;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #10B981;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">FULL FLEX</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #8B5CF6;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #8B5CF6;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #8B5CF6;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">PACHECO</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #F59E0B;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #F59E0B;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #F59E0B;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">FRATELLI</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #EF4444;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">SANPOR</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #06B6D4;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #06B6D4;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">XC9 ✗</span>
+                    </div>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">PRC TRANSPORTES</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #84CC16;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #84CC16;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #84CC16;">XC9 ✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Dados -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ISA</th>
+                        <th>Data Carga</th>
+                        <th>Rota</th>
+                        <th>Transportadora</th>
+                        <th>Tipo Veículo</th>
+                        <th>Motorista</th>
+                        <th>Placa</th>
+                        <th>Pallets</th>
+                        <th>Volume</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <!-- Dados serão inseridos via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Instruções para Integração Real -->
+        <div class="instructions">
+            <h3>🔄 Como conectar com a planilha real:</h3>
+            <ol style="margin: 1rem 0; padding-left: 2rem;">
+                <li><strong>Converter Excel para Google Sheets:</strong>
+                    <ul style="margin: 0.5rem 0; padding-left: 1rem;">
+                        <li>Abra o Excel original</li>
+                        <li>Arquivo → Salvar como Google Sheets</li>
+                        <li>Compartilhar → Obter link compartilhável</li>
+                    </ul>
+                </li>
+                <li><strong>Obter URL da API:</strong>
+                    <ul style="margin: 0.5rem 0; padding-left: 1rem;">
+                        <li>Formato: https://docs.google.com/spreadsheets/d/ID_DA_PLANILHA/gviz/tq?sheet=NOME_DA_ABA</li>
+                        <li>Substitua ID_DA_PLANILHA e NOME_DA_ABA</li>
+                    </ul>
+                </li>
+                <li><strong>Atualizar o código:</strong>
+                    <ul style="margin: 0.5rem 0; padding-left: 1rem;">
+                        <li>Substituir a função generateData() pela função de fetch real</li>
+                        <li>Usar a API do Google Sheets ou Microsoft Graph</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Configuração para integração real
+        const CONFIG = {
+            // URL da planilha original (SharePoint)
+            originalExcelUrl: 'https://texcourierltda-my.sharepoint.com/:x:/r/personal/vithoria_teles_totalexpress_com_br/_layouts/15/Doc.aspx?sourcedoc=%7BDFB6984C-79B4-40EB-9014-ECFAF51DDBC5%7D&file=TRANSFER%C3%8ANCIA%20PCP%20-%202025.xlsx',
+            
+            // Configuração das transportadoras
+            transportadoras: {
+                'INNOVATION': { color: '#3B82F6', fcs: ['GR8', 'GR9'] },
+                'GARBERG': { color: '#10B981', fcs: ['GR8', 'GR9', 'XC9'] },
+                'FULL FLEX': { color: '#8B5CF6', fcs: ['GR8', 'GR9', 'XC9'] },
+                'PACHECO': { color: '#F59E0B', fcs: ['GR8', 'GR9', 'XC9'] },
+                'FRATELLI': { color: '#EF4444', fcs: ['GR8', 'GR9', 'XC9'] },
+                'SANPOR': { color: '#06B6D4', fcs: ['GR8', 'GR9'] },
+                'PRC TRANSPORTES': { color: '#84CC16', fcs: ['GR8', 'GR9', 'XC9'] }
+            }
+        };
+
+        // Dados simulados baseados na estrutura real da planilha
+        function generateRealisticData() {
+            const data = [];
+            const transportadoraNames = Object.keys(CONFIG.transportadoras);
+            const tiposVeiculo = ['Truck', 'Van', 'Carreta', 'Bitrem'];
+            const statusOptions = ['Em Trânsito', 'Carregando', 'Finalizado', 'Aguardando'];
+            
+            // Estrutura baseada nas colunas reais da planilha
+            for (let i = 1; i <= 50; i++) {
+                const transportadora = transportadoraNames[Math.floor(Math.random() * transportadoraNames.length)];
+                const config = CONFIG.transportadoras[transportadora];
+                const fc = config.fcs[Math.floor(Math.random() * config.fcs.length)];
+                
+                const dataCarga = new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000);
+                
+                data.push({
+                    isa: `ISA${String(i).padStart(3, '0')}`,
+                    dataCarga: dataCarga.toLocaleDateString('pt-BR'),
+                    rota: `TZX-${fc}`,
+                    tipoVeiculo: tiposVeiculo[Math.floor(Math.random() * tiposVeiculo.length)],
+                    planejadoChegadaTZX: '08:00',
+                    planejadoSaidaTZX: '10:00',
+                    planejadoChegadaFC: fc === 'XC9' ? '15:30' : '14:00',
+                    idViagem: `VG${String(i).padStart(4, '0')}`,
+                    sm: `SM${i}`,
+                    caf: `CAF${String(i).padStart(3, '0')}`,
+                    pallets: Math.floor(Math.random() * 50) + 15,
+                    vol: Math.floor(Math.random() * 100) + 25,
+                    chegadaOrigem: '08:15',
+                    saidaOrigem: '10:30',
+                    chegadaDestino: fc === 'XC9' ? '15:45' : '14:15',
+                    finalizado: Math.random() > 0.4,
+                    baixaCAF: Math.random() > 0.5,
+                    transportadora,
+                    motorista: `Motorista ${i}`,
+                    placa: `${['ABC', 'DEF', 'GHI', 'JKL', 'MNO'][Math.floor(Math.random() * 5)]}${String(i).padStart(4, '0')}`,
+                    status: statusOptions[Math.floor(Math.random() * statusOptions.length)]
+                });
+            }
+            return data;
+        }
+
+        // Função para conectar com planilha real (template)
+        async function connectToRealSheet() {
+            const sheetUrl = document.getElementById('sheet-url').value;
+            const sheetId = document.getElementById('sheet-id').value;
+            const sheetName = document.getElementById('sheet-name').value;
+
+            if (!sheetUrl && !sheetId) {
+                alert('Por favor, insira a URL ou ID da planilha Google Sheets');
+                return;
+            }
+
+            // Template para integração real
+            const realDataUrl = `https://docs.google.com/spreadsheets/d/${sheetId || extractSheetId(sheetUrl)}/gviz/tq?sheet=${sheetName}&tqx=out:json`;
+            
+            try {
+                const response = await fetch(realDataUrl);
+                const data = await response.text();
+                const jsonData = JSON.parse(data.substring(47, data.length - 2));
+                
+                // Processar dados reais aqui
+                console.log('Dados reais carregados:', jsonData);
+                alert('Conexão estabelecida! Implemente o processamento dos dados reais.');
+                
+            } catch (error) {
+                console.error('Erro ao conectar:', error);
+                alert('Erro ao conectar com a planilha. Verifique a URL e as permissões.');
+            }
+        }
+
+        function extractSheetId(url) {
+            const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : null;
+        }
+
+        // Renderizar tabela
+        function renderTable(data) {
+            const tbody = document.getElementById('data-table');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><strong>${item.isa}</strong></td>
+                    <td>${item.dataCarga}</td>
+                    <td><strong>${item.rota}</strong></td>
+                    <td><span class="transportadora-badge" style="background: ${CONFIG.transportadoras[item.transportadora].color}">${item.transportadora}</span></td>
+                    <td>${item.tipoVeiculo}</td>
+                    <td>${item.motorista}</td>
+                    <td><span style="font-family: monospace; background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 0.25rem;">${item.placa}</span></td>
+                    <td style="text-align: center; font-weight: 600;">${item.pallets}</td>
+                    <td style="text-align: center; font-weight: 600;">${item.vol}</td>
+                    <td><span class="status-badge status-${item.status.toLowerCase().replace(' ', '-')}">${item.status}</span></td>
+                `;
+            });
+        }
+
+        // Atualizar estatísticas
+        function updateStats(data) {
+            const total = data.length;
+            const finalizadas = data.filter(item => item.status === 'Finalizado').length;
+            const emTransito = data.filter(item => item.status === 'Em Trânsito').length;
+            const carregando = data.filter(item => item.status === 'Carregando').length;
+
+            document.getElementById('total-viagens').textContent = total;
+            document.getElementById('finalizadas').textContent = finalizadas;
+            document.getElementById('em-transito').textContent = emTransito;
+            document.getElementById('carregando').textContent = carregando;
+        }
+
+        // Carregar dados de exemplo
+        function loadSampleData() {
+            const data = generateRealisticData();
+            renderTable(data);
+            updateStats(data);
+            
+            // Atualizar status
+            document.getElementById('connection-status').innerHTML = `
+                <h3>✅ Dados de Exemplo Carregados</h3>
+                <p>Exibindo ${data.length} registros baseados na estrutura real da planilha Excel.</p>
+                <p><strong>Para dados reais:</strong> Converta o Excel para Google Sheets e use a API correspondente.</p>
+            `;
+            document.getElementById('connection-status').className = 'connection-status success';
+        }
+
+        // Exportar para CSV
+        function exportToCSV() {
+            const data = generateRealisticData();
+            const headers = ['ISA', 'Data Carga', 'Rota', 'Transportadora', 'Tipo Veículo', 'Motorista', 'Placa', 'Pallets', 'Volume', 'Status'];
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    row.isa, row.dataCarga, row.rota, row.transportadora, 
+                    row.tipoVeiculo, row.motorista, row.placa, 
+                    row.pallets, row.vol, row.status
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'rastreamento-amazon-fc.csv';
+            link.click();
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSampleData();
+        });
+    </script>
+</body>
+</html>
