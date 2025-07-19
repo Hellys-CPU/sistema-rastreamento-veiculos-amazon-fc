@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Rastreamento Amazon FC - TZX → GR8, GR9, XC9</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin: 2rem 0;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .filter-item label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .filter-item select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-finalizado {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-transito {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-carregando {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .transportadora-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        .info-section {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .coverage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .coverage-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+            }
+            
+            .filter-item {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>Sistema de Rastreamento Amazon FC</h1>
+                    <p>Monitoramento de rotas TZX → GR8, GR9, XC9</p>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">
+                        <div>Origem: TZX</div>
+                        <div>Destinos: GR8, GR9, XC9</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Dashboard de Estatísticas -->
+        <div class="stats-grid" id="stats-container">
+            <div class="stat-card">
+                <h3>Total de Viagens</h3>
+                <div class="value" id="total-viagens">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Finalizadas</h3>
+                <div class="value" id="finalizadas">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Em Trânsito</h3>
+                <div class="value" id="em-transito">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Carregando</h3>
+                <div class="value" id="carregando">-</div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label>Filtrar por FC:</label>
+                    <select id="fc-filter" onchange="applyFilters()">
+                        <option value="">Todos os FC</option>
+                        <option value="GR8">GR8</option>
+                        <option value="GR9">GR9</option>
+                        <option value="XC9">XC9</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Filtrar por Transportadora:</label>
+                    <select id="transportadora-filter" onchange="applyFilters()">
+                        <option value="">Todas as Transportadoras</option>
+                        <option value="INNOVATION">INNOVATION</option>
+                        <option value="GARBERG">GARBERG</option>
+                        <option value="FULL FLEX">FULL FLEX</option>
+                        <option value="PACHECO">PACHECO</option>
+                        <option value="FRATELLI">FRATELLI</option>
+                        <option value="SANPOR">SANPOR</option>
+                        <option value="PRC TRANSPORTES">PRC TRANSPORTES</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Filtrar por Status:</label>
+                    <select id="status-filter" onchange="applyFilters()">
+                        <option value="">Todos os Status</option>
+                        <option value="Em Trânsito">Em Trânsito</option>
+                        <option value="Carregando">Carregando</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Aguardando">Aguardando</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cobertura das Transportadoras -->
+        <div class="info-section">
+            <h3 style="margin-bottom: 1rem; font-size: 1.125rem; font-weight: 600;">Cobertura das Transportadoras por FC</h3>
+            <div class="coverage-grid">
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">INNOVATION</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #3B82F6;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #3B82F6;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">XC9 ✗</span>
+                    </div>
+                </div>
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">GARBERG</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #10B981;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #10B981;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #10B981;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">FULL FLEX</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #8B5CF6;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #8B5CF6;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #8B5CF6;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">PACHECO</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #F59E0B;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #F59E0B;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #F59E0B;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">FRATELLI</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #EF4444;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">XC9 ✓</span>
+                    </div>
+                </div>
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">SANPOR</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #06B6D4;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #06B6D4;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #EF4444;">XC9 ✗</span>
+                    </div>
+                </div>
+                <div class="coverage-card">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">PRC TRANSPORTES</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <span class="transportadora-badge" style="background: #84CC16;">GR8 ✓</span>
+                        <span class="transportadora-badge" style="background: #84CC16;">GR9 ✓</span>
+                        <span class="transportadora-badge" style="background: #84CC16;">XC9 ✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Dados -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ISA</th>
+                        <th>Data Carga</th>
+                        <th>Rota</th>
+                        <th>Transportadora</th>
+                        <th>Tipo Veículo</th>
+                        <th>Motorista</th>
+                        <th>Placa</th>
+                        <th>Pallets</th>
+                        <th>Volume</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <!-- Dados serão inseridos via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Dados simulados baseados na estrutura da planilha Excel
+        const transportadoras = {
+            'INNOVATION': { color: '#3B82F6', fcs: ['GR8', 'GR9'] },
+            'GARBERG': { color: '#10B981', fcs: ['GR8', 'GR9', 'XC9'] },
+            'FULL FLEX': { color: '#8B5CF6', fcs: ['GR8', 'GR9', 'XC9'] },
+            'PACHECO': { color: '#F59E0B', fcs: ['GR8', 'GR9', 'XC9'] },
+            'FRATELLI': { color: '#EF4444', fcs: ['GR8', 'GR9', 'XC9'] },
+            'SANPOR': { color: '#06B6D4', fcs: ['GR8', 'GR9'] },
+            'PRC TRANSPORTES': { color: '#84CC16', fcs: ['GR8', 'GR9', 'XC9'] }
+        };
+
+        const tiposVeiculo = ['Truck', 'Van', 'Carreta', 'Bitrem'];
+        const statusOptions = ['Em Trânsito', 'Carregando', 'Finalizado', 'Aguardando'];
+
+        let allData = [];
+        let filteredData = [];
+
+        // Gerar dados simulados
+        function generateData() {
+            const data = [];
+            const transportadoraNames = Object.keys(transportadoras);
+            
+            for (let i = 1; i <= 30; i++) {
+                const transportadora = transportadoraNames[Math.floor(Math.random() * transportadoraNames.length)];
+                const config = transportadoras[transportadora];
+                const fc = config.fcs[Math.floor(Math.random() * config.fcs.length)];
+                
+                const dataCarga = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
+                
+                data.push({
+                    isa: `ISA${String(i).padStart(3, '0')}`,
+                    dataCarga: dataCarga.toLocaleDateString('pt-BR'),
+                    rota: `TZX-${fc}`,
+                    transportadora,
+                    tipoVeiculo: tiposVeiculo[Math.floor(Math.random() * tiposVeiculo.length)],
+                    motorista: `Motorista ${i}`,
+                    placa: `${['ABC', 'DEF', 'GHI', 'JKL'][Math.floor(Math.random() * 4)]}${String(i).padStart(4, '0')}`,
+                    pallets: Math.floor(Math.random() * 40) + 10,
+                    vol: Math.floor(Math.random() * 80) + 20,
+                    status: statusOptions[Math.floor(Math.random() * statusOptions.length)]
+                });
+            }
+            return data;
+        }
+
+        // Renderizar tabela
+        function renderTable(data) {
+            const tbody = document.getElementById('data-table');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${item.isa}</td>
+                    <td>${item.dataCarga}</td>
+                    <td><strong>${item.rota}</strong></td>
+                    <td><span class="transportadora-badge" style="background: ${transportadoras[item.transportadora].color}">${item.transportadora}</span></td>
+                    <td>${item.tipoVeiculo}</td>
+                    <td>${item.motorista}</td>
+                    <td><span style="font-family: monospace; background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 0.25rem;">${item.placa}</span></td>
+                    <td style="text-align: center; font-weight: 600;">${item.pallets}</td>
+                    <td style="text-align: center; font-weight: 600;">${item.vol}</td>
+                    <td><span class="status-badge status-${item.status.toLowerCase().replace(' ', '-')}">${item.status}</span></td>
+                `;
+            });
+        }
+
+        // Atualizar estatísticas
+        function updateStats(data) {
+            const total = data.length;
+            const finalizadas = data.filter(item => item.status === 'Finalizado').length;
+            const emTransito = data.filter(item => item.status === 'Em Trânsito').length;
+            const carregando = data.filter(item => item.status === 'Carregando').length;
+
+            document.getElementById('total-viagens').textContent = total;
+            document.getElementById('finalizadas').textContent = finalizadas;
+            document.getElementById('em-transito').textContent = emTransito;
+            document.getElementById('carregando').textContent = carregando;
+        }
+
+        // Aplicar filtros
+        function applyFilters() {
+            const fcFilter = document.getElementById('fc-filter').value;
+            const transportadoraFilter = document.getElementById('transportadora-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+
+            filteredData = allData.filter(item => {
+                return (!fcFilter || item.rota.includes(fcFilter)) &&
+                       (!transportadoraFilter || item.transportadora === transportadoraFilter) &&
+                       (!statusFilter || item.status === statusFilter);
+            });
+
+            renderTable(filteredData);
+            updateStats(filteredData);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            allData = generateData();
+            filteredData = allData;
+            renderTable(filteredData);
+            updateStats(filteredData);
+        });
+    </script>
+</body>
+</html>
