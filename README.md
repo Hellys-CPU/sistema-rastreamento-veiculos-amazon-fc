@@ -21,7 +21,7 @@ Sistema completo de rastreamento de veículos para rotas Amazon com origem TZX e
 2. **Execute o servidor**:
    ```bash
    npm run dev
-   # Acesse: http://localhost:8000
+   # Acesse: https://g5wjsg-8000.csb.app/
    ```
 
 ## 📋 Funcionalidades
